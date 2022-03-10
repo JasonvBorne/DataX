@@ -301,8 +301,9 @@ public class CommonRdbmsWriter {
                                 Class plugClass = (Class) EncryptEnum.toMap().get(classPath);
                                 if (plugClass != null) {
                                     try {
+                                        Object o = plugClass.newInstance();
                                         Method encryptMethod = plugClass.getMethod("encrypt", String.class, Map.class);
-                                        value =(String) encryptMethod.invoke(plugClass, value, null);
+                                        value =(String) encryptMethod.invoke(o, value, null);
                                         record.setColumn(i,new StringColumn(value));
                                     }catch (NoSuchMethodException e){
                                         LOG.error("{}",e);
