@@ -2,6 +2,7 @@ package com.alibaba.datax.plugin.rdbms.writer;
 
 import com.alibaba.datax.common.element.Column;
 import com.alibaba.datax.common.element.Record;
+import com.alibaba.datax.common.element.StringColumn;
 import com.alibaba.datax.common.exception.DataXException;
 import com.alibaba.datax.common.plugin.RecordReceiver;
 import com.alibaba.datax.common.plugin.TaskPluginCollector;
@@ -12,17 +13,21 @@ import com.alibaba.datax.plugin.rdbms.util.DataBaseType;
 import com.alibaba.datax.plugin.rdbms.util.RdbmsException;
 import com.alibaba.datax.plugin.rdbms.writer.util.OriginalConfPretreatmentUtil;
 import com.alibaba.datax.plugin.rdbms.writer.util.WriterUtil;
+import com.sunyard.dmp.common.encrypt.enums.EncryptEnum;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Triple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class CommonRdbmsWriter {
 
@@ -187,6 +192,7 @@ public class CommonRdbmsWriter {
         protected int batchSize;
         protected int batchByteSize;
         protected int columnNumber = 0;
+        protected List<String> encryptColumns;
         protected TaskPluginCollector taskPluginCollector;
 
         // 作为日志显示信息时，需要附带的通用信息。比如信息所对应的数据库连接等信息，针对哪个表做的操作
@@ -226,7 +232,7 @@ public class CommonRdbmsWriter {
 
             this.columns = writerSliceConfig.getList(Key.COLUMN, String.class);
             this.columnNumber = this.columns.size();
-
+            this.encryptColumns = writerSliceConfig.getList(Key.ENCRYPT_COLUMNS, String.class);
             this.preSqls = writerSliceConfig.getList(Key.PRE_SQL, String.class);
             this.postSqls = writerSliceConfig.getList(Key.POST_SQL, String.class);
             this.batchSize = writerSliceConfig.getInt(Key.BATCH_SIZE, Constant.DEFAULT_BATCH_SIZE);
@@ -283,7 +289,33 @@ public class CommonRdbmsWriter {
                                                 record.getColumnNumber(),
                                                 this.columnNumber));
                     }
+                    //遍历需要加密的字段，目前加密的都是字符串类型的
+                    for(String encyptColumn :this.encryptColumns ){
+                        String[] array = encyptColumn.split(":");
+                        String column = array[0];
+                        String classPath = array[1];
+                        for(int i =0;i<this.columns.size();i++){
+                            if(StringUtils.equalsIgnoreCase(column,this.columns.get(i))){
+                                Column columnValue = record.getColumn(i);
+                                String value = (String ) columnValue.getRawData();
+                                Class plugClass = (Class) EncryptEnum.toMap().get(classPath);
+                                if (plugClass != null) {
+                                    try {
+                                        Method encryptMethod = plugClass.getMethod("encrypt", String.class, Map.class);
+                                        value =(String) encryptMethod.invoke(plugClass, value, null);
+                                        record.setColumn(i,new StringColumn(value));
+                                    }catch (NoSuchMethodException e){
+                                        LOG.error("{}",e);
+                                    } catch (IllegalAccessException e) {
+                                        LOG.error("{}",e);
+                                    } catch (InvocationTargetException e) {
+                                        LOG.error("{}",e);
+                                    }
+                                }
 
+                            }
+                        }
+                    }
                     writeBuffer.add(record);
                     bufferBytes += record.getMemorySize();
 
