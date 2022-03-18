@@ -200,8 +200,8 @@ public class CommonRdbmsWriter {
         protected int batchByteSize;
         protected int columnNumber = 0;
         protected List<String> encryptColumns;
-        protected Map<String, String> configVariableCnName;
-        protected Map<String, JSONArray> encryptRule;
+        protected Map<String, String> configVariableCnName=new HashMap<>();
+        protected Map<String, JSONArray> encryptRule=new HashMap<>();
         protected TaskPluginCollector taskPluginCollector;
 
         // 作为日志显示信息时，需要附带的通用信息。比如信息所对应的数据库连接等信息，针对哪个表做的操作
@@ -242,8 +242,14 @@ public class CommonRdbmsWriter {
             this.columns = writerSliceConfig.getList(Key.COLUMN, String.class);
             this.columnNumber = this.columns.size();
             this.encryptColumns = writerSliceConfig.getList(Key.ENCRYPT_COLUMNS, String.class);
-            this.encryptRule=writerSliceConfig.get(Key.ENCRYPT_RULE_COLUMNS, Map.class);
-            this.configVariableCnName=writerSliceConfig.get(Key.CONFIG_VARIABLE_CNNAME_COLUMNS, Map.class);
+            Map encryptRuleMap = writerSliceConfig.get(Key.ENCRYPT_RULE_COLUMNS, Map.class);
+            if (encryptRuleMap!=null&&(!encryptRuleMap.isEmpty())){
+                this.encryptRule=encryptRuleMap;
+            }
+            Map configVariableCnNameMap=writerSliceConfig.get(Key.CONFIG_VARIABLE_CNNAME_COLUMNS, Map.class);
+            if (configVariableCnNameMap!=null&&(!configVariableCnNameMap.isEmpty())){
+                this.configVariableCnName=configVariableCnNameMap;
+            }
             this.preSqls = writerSliceConfig.getList(Key.PRE_SQL, String.class);
             this.postSqls = writerSliceConfig.getList(Key.POST_SQL, String.class);
             this.batchSize = writerSliceConfig.getInt(Key.BATCH_SIZE, Constant.DEFAULT_BATCH_SIZE);
