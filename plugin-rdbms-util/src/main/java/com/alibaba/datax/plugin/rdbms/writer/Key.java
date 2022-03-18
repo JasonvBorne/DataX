@@ -40,4 +40,9 @@ public final class Key {
 
     public final static String ENCRYPT_COLUMNS = "encrypt";
 
+    public final static String ENCRYPT_RULE_COLUMNS = "encryptRule";
+
+    public final static String CONFIG_VARIABLE_CNNAME_COLUMNS = "configVariableCnName";
+
+
 }

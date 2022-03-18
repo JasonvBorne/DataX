@@ -18,6 +18,11 @@
 			<version>4.1.0</version>
 		</dependency>
 		<dependency>
+			<groupId>com.sunyard</groupId>
+			<artifactId>dmp-common-run-judge</artifactId>
+			<version>4.1.0</version>
+		</dependency>
+		<dependency>
 			<groupId>com.alibaba.datax</groupId>
 			<artifactId>datax-common</artifactId>
 			<version>${datax-project-version}</version>

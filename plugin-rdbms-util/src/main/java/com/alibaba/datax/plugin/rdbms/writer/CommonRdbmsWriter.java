@@ -13,7 +13,13 @@ import com.alibaba.datax.plugin.rdbms.util.DataBaseType;
 import com.alibaba.datax.plugin.rdbms.util.RdbmsException;
 import com.alibaba.datax.plugin.rdbms.writer.util.OriginalConfPretreatmentUtil;
 import com.alibaba.datax.plugin.rdbms.writer.util.WriterUtil;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.sunyard.dmp.common.encrypt.enums.EncryptEnum;
+import com.sunyard.dmp.common.run.judge.core.RunJudgeConstants;
+import com.sunyard.dmp.common.run.judge.core.enums.JudgeRuleEnum;
+import com.sunyard.dmp.common.run.judge.dto.RuleValueContentDTO;
+import com.sunyard.dmp.common.run.judge.execute.RunJudgeExecute;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Triple;
 import org.slf4j.Logger;
@@ -26,6 +32,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -193,6 +200,8 @@ public class CommonRdbmsWriter {
         protected int batchByteSize;
         protected int columnNumber = 0;
         protected List<String> encryptColumns;
+        protected Map<String, String> configVariableCnName;
+        protected Map<String, JSONArray> encryptRule;
         protected TaskPluginCollector taskPluginCollector;
 
         // 作为日志显示信息时，需要附带的通用信息。比如信息所对应的数据库连接等信息，针对哪个表做的操作
@@ -233,6 +242,8 @@ public class CommonRdbmsWriter {
             this.columns = writerSliceConfig.getList(Key.COLUMN, String.class);
             this.columnNumber = this.columns.size();
             this.encryptColumns = writerSliceConfig.getList(Key.ENCRYPT_COLUMNS, String.class);
+            this.encryptRule=writerSliceConfig.get(Key.ENCRYPT_RULE_COLUMNS, Map.class);
+            this.configVariableCnName=writerSliceConfig.get(Key.CONFIG_VARIABLE_CNNAME_COLUMNS, Map.class);
             this.preSqls = writerSliceConfig.getList(Key.PRE_SQL, String.class);
             this.postSqls = writerSliceConfig.getList(Key.POST_SQL, String.class);
             this.batchSize = writerSliceConfig.getInt(Key.BATCH_SIZE, Constant.DEFAULT_BATCH_SIZE);
@@ -273,6 +284,11 @@ public class CommonRdbmsWriter {
                     this.table, StringUtils.join(this.columns, ","));
             // 写数据库的SQL语句
             calcWriteRecordSql();
+            //组装字段
+            HashMap<Integer, String> columnsMap = new HashMap<>();
+            for (int i = 0; i < this.columns.size(); i++) {
+                columnsMap.put(i,this.columns.get(i));
+            }
 
             List<Record> writeBuffer = new ArrayList<Record>(this.batchSize);
             int bufferBytes = 0;
@@ -289,6 +305,14 @@ public class CommonRdbmsWriter {
                                                 record.getColumnNumber(),
                                                 this.columnNumber));
                     }
+                    //组装字段和值
+                    Map<String, Object> parameterMap = new HashMap<>();
+                    for (int i = 0; i < record.getColumnNumber(); i++) {
+                        String code = configVariableCnName.get(columnsMap.get(i));
+                        if (StringUtils.isNotBlank(code)){
+                            parameterMap.put(code,record.getColumn(i).getRawData());
+                        }
+                    }
                     //遍历需要加密的字段，目前加密的都是字符串类型的
                     for(String encyptColumn :this.encryptColumns ){
                         String[] array = encyptColumn.split(":");
@@ -299,7 +323,17 @@ public class CommonRdbmsWriter {
                                 Column columnValue = record.getColumn(i);
                                 String value = (String ) columnValue.getRawData();
                                 Class plugClass = (Class) EncryptEnum.toMap().get(classPath);
-                                if (plugClass != null) {
+                                JSONArray jsonArray = encryptRule.get(columnsMap.get(i));
+                                List<RuleValueContentDTO> valueContentDTOS =null;
+                                if (jsonArray!=null){
+                                    valueContentDTOS=JSON.parseArray(jsonArray.toJSONString(),RuleValueContentDTO.class);
+                                }
+                                boolean flag = true;
+                                parameterMap.put(RunJudgeConstants.PARAMETER_VALUE,value);
+                                if (valueContentDTOS!=null&&valueContentDTOS.size()>0){
+                                      flag= RunJudgeExecute.execute(JudgeRuleEnum.ENCRYPT_RULE, value, valueContentDTOS, parameterMap);
+                                }
+                                if (plugClass != null&&flag) {
                                     try {
                                         Object o = plugClass.newInstance();
                                         Method encryptMethod = plugClass.getMethod("encrypt", String.class, Map.class);
