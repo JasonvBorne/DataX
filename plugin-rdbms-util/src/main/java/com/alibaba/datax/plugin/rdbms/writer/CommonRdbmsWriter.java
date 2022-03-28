@@ -330,14 +330,10 @@ public class CommonRdbmsWriter {
                                 String value = (String ) columnValue.getRawData();
                                 Class plugClass = (Class) EncryptEnum.toMap().get(classPath);
                                 JSONArray jsonArray = encryptRule.get(columnsMap.get(i));
-                                List<RuleValueContentDTO> valueContentDTOS =null;
-                                if (jsonArray!=null){
-                                    valueContentDTOS=JSON.parseArray(jsonArray.toJSONString(),RuleValueContentDTO.class);
-                                }
                                 boolean flag = true;
                                 parameterMap.put(RunJudgeConstants.PARAMETER_VALUE,value);
-                                if (valueContentDTOS!=null&&valueContentDTOS.size()>0){
-                                      flag= RunJudgeExecute.execute(JudgeRuleEnum.ENCRYPT_RULE, value, valueContentDTOS, parameterMap);
+                                if (jsonArray!=null){
+                                    flag= RunJudgeExecute.execute(JudgeRuleEnum.ENCRYPT_RULE, value, JSON.parseArray(jsonArray.toJSONString(),RuleValueContentDTO.class), parameterMap);
                                 }
                                 if (plugClass != null&&flag) {
                                     try {
