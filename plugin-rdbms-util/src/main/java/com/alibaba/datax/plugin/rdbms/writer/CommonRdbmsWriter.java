@@ -199,7 +199,7 @@ public class CommonRdbmsWriter {
         protected int batchSize;
         protected int batchByteSize;
         protected int columnNumber = 0;
-        protected List<String> encryptColumns;
+        protected List<String> encryptColumns=new ArrayList<>();
         protected Map<String, String> configVariableCnName=new HashMap<>();
         protected Map<String, JSONArray> encryptRule=new HashMap<>();
         protected TaskPluginCollector taskPluginCollector;
@@ -241,7 +241,10 @@ public class CommonRdbmsWriter {
 
             this.columns = writerSliceConfig.getList(Key.COLUMN, String.class);
             this.columnNumber = this.columns.size();
-            this.encryptColumns = writerSliceConfig.getList(Key.ENCRYPT_COLUMNS, String.class);
+            List<String> encryptColumnList = writerSliceConfig.getList(Key.ENCRYPT_COLUMNS, String.class);
+            if (encryptColumnList!=null&&encryptColumnList.size()>0){
+                this.encryptColumns=encryptColumnList;
+            }
             Map encryptRuleMap = writerSliceConfig.get(Key.ENCRYPT_RULE_COLUMNS, Map.class);
             if (encryptRuleMap!=null&&(!encryptRuleMap.isEmpty())){
                 this.encryptRule=encryptRuleMap;
