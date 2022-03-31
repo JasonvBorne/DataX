@@ -200,6 +200,7 @@ public class CommonRdbmsWriter {
         protected int batchByteSize;
         protected int columnNumber = 0;
         protected List<String> encryptColumns=new ArrayList<>();
+        protected List<String> defValueColumns=new ArrayList<>();
         protected Map<String, String> configVariableCnName=new HashMap<>();
         protected Map<String, JSONArray> encryptRule=new HashMap<>();
         protected TaskPluginCollector taskPluginCollector;
@@ -244,6 +245,12 @@ public class CommonRdbmsWriter {
             List<String> encryptColumnList = writerSliceConfig.getList(Key.ENCRYPT_COLUMNS, String.class);
             if (encryptColumnList!=null&&encryptColumnList.size()>0){
                 this.encryptColumns=encryptColumnList;
+            }
+
+
+            List<String> defValueColumnList = writerSliceConfig.getList(Key.DEF_VALUE_COLUMNS, String.class);
+            if (defValueColumnList!=null&&defValueColumnList.size()>0){
+                this.defValueColumns=defValueColumnList;
             }
             Map encryptRuleMap = writerSliceConfig.get(Key.ENCRYPT_RULE_COLUMNS, Map.class);
             if (encryptRuleMap!=null&&(!encryptRuleMap.isEmpty())){
@@ -320,6 +327,21 @@ public class CommonRdbmsWriter {
                         String code = configVariableCnName.get(columnsMap.get(i));
                         if (StringUtils.isNotBlank(code)){
                             parameterMap.put(code,record.getColumn(i).getRawData());
+                        }
+                    }
+                    //设置默认值
+                    for(int i =0;i<this.defValueColumns.size();i++){
+                        String[] array = defValueColumns.get(i).split(":");
+                        String column = array[0];
+                        String defValue = array[1];
+                        if(StringUtils.isBlank(defValue)){
+                            continue;
+                        }else {
+                            Column columnValue = record.getColumn(i);
+                            String value = (String ) columnValue.getRawData();
+                            if(StringUtils.isBlank(value)){
+                                record.setColumn(i,new StringColumn(defValue));
+                            }
                         }
                     }
                     //遍历需要加密的字段，目前加密的都是字符串类型的
@@ -646,5 +668,11 @@ public class CommonRdbmsWriter {
         protected String calcValueHolder(String columnType) {
             return VALUE_HOLDER;
         }
+    }
+
+    public static void main(String[] args) {
+        String aa = "sss: ";
+        String[] array = aa.split(":");
+        System.out.println(StringUtils.isBlank(array[1]));
     }
 }
