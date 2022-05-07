@@ -338,7 +338,7 @@ public class CommonRdbmsWriter {
                             continue;
                         }else {
                             Column columnValue = record.getColumn(i);
-                            String value = (String ) columnValue.getRawData();
+                            String value = String.valueOf(columnValue.getRawData()) ;
                             if(StringUtils.isBlank(value)){
                                 record.setColumn(i,new StringColumn(defValue));
                             }
