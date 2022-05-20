@@ -58,6 +58,17 @@ public class CommonRdbmsReader {
                     originalConfig.toJSON());
         }
 
+        public Configuration init2(Configuration originalConfig)
+        {
+
+            OriginalConfPretreatmentUtil.doPretreatment(originalConfig);
+
+            LOG.debug("After job init(), job config now is:[\n{}\n]", originalConfig.toJSON());
+            return originalConfig;
+        }
+
+
+
         public void preCheck(Configuration originalConfig,DataBaseType dataBaseType) {
             /*检查每个表是否有读权限，以及querySql跟splik Key是否正确*/
             Configuration queryConf = ReaderSplitUtil.doPreCheckSplit(originalConfig);

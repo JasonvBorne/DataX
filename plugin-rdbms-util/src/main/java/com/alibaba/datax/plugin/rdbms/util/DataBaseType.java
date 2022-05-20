@@ -11,6 +11,7 @@ import java.util.regex.Pattern;
  */
 public enum DataBaseType {
     MySql("mysql", "com.mysql.jdbc.Driver"),
+    Hive("hive2", "org.apache.hive.jdbc.HiveDriver"),
     Tddl("mysql", "com.mysql.jdbc.Driver"),
     DRDS("drds", "com.mysql.jdbc.Driver"),
     Oracle("oracle", "oracle.jdbc.OracleDriver"),
@@ -67,6 +68,8 @@ public enum DataBaseType {
                 break;
             case Oscar:
                 break;
+            case Hive:
+                break;
             default:
                 throw DataXException.asDataXException(DBUtilErrorCode.UNSUPPORTED_TYPE, "unsupported database type.");
         }
@@ -118,6 +121,8 @@ public enum DataBaseType {
                     result = jdbc + "?" + suffix;
                 }
                 break;
+            case Hive:
+                break;
             default:
                 throw DataXException.asDataXException(DBUtilErrorCode.UNSUPPORTED_TYPE, "unsupported database type.");
         }
@@ -141,6 +146,7 @@ public enum DataBaseType {
                 }
                 break;
             case DB2:
+            case Hive:
             case PostgreSQL:
             case KingbaseES:
             case Oscar:
@@ -168,6 +174,7 @@ public enum DataBaseType {
             case DB2:
             case PostgreSQL:
             case KingbaseES:
+            case Hive:
             case Oscar:
                 break;
             default:
@@ -195,6 +202,8 @@ public enum DataBaseType {
             case KingbaseES:
                 break;
             case Oscar:
+                break;
+            case Hive:
                 break;
             default:
                 throw DataXException.asDataXException(DBUtilErrorCode.UNSUPPORTED_TYPE, "unsupported database type");

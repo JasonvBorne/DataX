@@ -1,0 +1,37 @@
+{
+    "job": {
+        "setting": {
+            "speed": {
+                 "channel":1
+            }
+        },
+        "content": [
+            {
+                "reader": {
+                    "name": "hivereader",
+                    "parameter": {
+                        "username": "hive",
+                        "password": "hive",
+                        "connection": [
+                            {
+                                "querySql": [
+                                    "select * from dm.g01"
+                                ],
+                                "jdbcUrl": [
+                                    "jdbc:hive2://172.1.2.22:10000/dm"
+                                ]
+                            }
+                        ]
+                    }
+                },
+                "writer": {
+                    "name": "streamwriter",
+                    "parameter": {
+                        "print": true,
+                        "encoding": "UTF-8"
+                    }
+                }
+            }
+        ]
+    }
+}
